@@ -2,7 +2,7 @@ import { Response, NextFunction, Request } from 'express';
 import GeoJSONService from '../services/geojson.service';
 import osmtogeojson from 'osmtogeojson';
 import { HttpException } from '../middleware/error';
-import { MyContext } from '../types';
+// import { MyContext } from '../types';
 
 class GeoJSONController {
   private geoJSONService: GeoJSONService;
@@ -14,7 +14,7 @@ class GeoJSONController {
   public getJSONData = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { coords } = req.query as any;
-      const redis = (req as MyContext).redis;
+      // const redis = (req as MyContext).redis;
 
       let error: string | null = null;
 
@@ -48,21 +48,22 @@ class GeoJSONController {
 
       const data = await this.geoJSONService.getOSMData({ minLat, minLon, maxLat, maxLon });
 
+      const geojson = osmtogeojson(data);
+
+      return res.status(200).json(geojson);
       //  get results from redis
-      const redisData = await redis.get(coords);
+      // const redisData = await redis.get(coords);
 
       // if redis data is not null, return it
-      if (redisData) {
-        return res.status(200).json(JSON.parse(redisData));
-      } else {
-        // if redis data is null, convert osm data to geojson and save it to redis
-        const geojson = osmtogeojson(data);
-        await redis.set(coords, JSON.stringify(data), 'EX', 1000 * 60 * 60 * 24).catch((_err) => {
-          return res.status(200).json(geojson);
-        });
+      // if (redisData) {
+      //   return res.status(200).json(JSON.parse(redisData));
+      // } else {
+      //   // if redis data is null, convert osm data to geojson and save it to redis
+      //   await redis.set(coords, JSON.stringify(data), 'EX', 1000 * 60 * 60 * 24).catch((_err) => {
+      //     return res.status(200).json(geojson);
+      //   });
 
-        return res.status(200).json(geojson);
-      }
+      // }
     } catch (error) {
       // console.log('error', error);
       return next(error);
