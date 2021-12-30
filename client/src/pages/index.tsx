@@ -3,6 +3,7 @@ import HeadBoy from '@components/HeadBoy';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import { useState } from 'react';
+import axios from 'axios';
 
 const InputDataSchema = Yup.object().shape({
   min_lat: Yup.number()
@@ -37,8 +38,52 @@ const INITIAL_VALUES = {
   max_lon: '',
 };
 
+type GeoProps = {
+  id: string;
+  name: string;
+  description: string;
+  geometry: {
+    type: string;
+    coordinates: number[];
+  };
+  long_name: string;
+  from?: string;
+  to?: string;
+};
+
 function Home() {
-  const [data, setData] = useState<InputDataProps>(INITIAL_VALUES);
+  const [geoData, setGeoData] = useState<GeoProps[]>([]);
+  const getGeoJSON = async (values: InputDataProps) => {
+    const { min_lat, min_lon, max_lat, max_lon } = values;
+    try {
+      const response = await axios.get('http://localhost:5000/api/geojson', {
+        params: {
+          coords: `${min_lon},${min_lat},${max_lon},${max_lat}`,
+        },
+      });
+
+      const { data } = response;
+
+      const geoDataMap = data.features.map((geoFeatures) => {
+        const properties = geoFeatures.properties;
+        const geometry = geoFeatures.geometry;
+
+        return {
+          id: properties.id,
+          name: properties.name,
+          description: properties.description,
+          long_name: properties.long_name,
+          from: properties.from,
+          to: properties.to,
+          geometry,
+        } as GeoProps;
+      });
+
+      setGeoData(geoDataMap);
+    } catch (error) {
+      console.log('error', error);
+    }
+  };
 
   return (
     <>
@@ -52,10 +97,20 @@ function Home() {
                 validationSchema={InputDataSchema}
                 initialValues={INITIAL_VALUES}
                 onSubmit={(values, { setSubmitting }) => {
-                  console.log(JSON.stringify(values));
+                  setSubmitting(true);
+                  getGeoJSON(values)
+                    .then(() => setSubmitting(false))
+                    .catch(() => setSubmitting(false));
                 }}
               >
-                {({ errors, handleChange, handleSubmit, touched, values }) => {
+                {({
+                  errors,
+                  handleChange,
+                  handleSubmit,
+                  touched,
+                  values,
+                  isSubmitting,
+                }) => {
                   return (
                     <Form className="form">
                       <section className="input-wrapper">
@@ -114,7 +169,11 @@ function Home() {
                           )}
                         </div>
                       </section>
-                      <Button type="submit" onClick={handleSubmit}>
+                      <Button
+                        type="submit"
+                        onClick={handleSubmit}
+                        disabled={isSubmitting}
+                      >
                         Submit
                       </Button>
                     </Form>
@@ -123,20 +182,31 @@ function Home() {
               </Formik>
             </section>
           </FormCard>
-          <AccordionCard>
-            <section className="card-inner">
-              <section className="content">
-                <section className="summary">
-                  <h5 className="title">Weinpfad Kraichgau</h5>
-                  <p className="description">
-                    Odenwaldklub HW 9, Weinpfad Kraichgau: Wiesloch - Münzesheim
-                    - Weingarten
-                  </p>
+          {geoData.length > 0 ? (
+            geoData.map((geo) => (
+              <AccordionCard key={geo.id}>
+                <section className="card-inner">
+                  <section className="content">
+                    <section className="summary">
+                      <h5 className="title">{geo.name}</h5>
+                      <p className="description">
+                        {geo.long_name || geo.description}
+                      </p>
+                      {geo.from && geo.to && (
+                        <p className="direction">
+                          {geo.from} <>&rarr;</> {geo.to}
+                        </p>
+                      )}
+                    </section>
+                  </section>
                 </section>
-                <button className="view-more">View More</button>
-              </section>
-            </section>
-          </AccordionCard>
+              </AccordionCard>
+            ))
+          ) : (
+            <EmptyBox>
+              <p>There is no data to display</p>
+            </EmptyBox>
+          )}
         </section>
       </Wrapper>
     </>
@@ -163,10 +233,17 @@ const Wrapper = styled.main`
     }
     @media (max-width: ${(props) => props.theme.breakpoints.sm}) {
       width: 100%;
+      padding: 0;
     }
   }
 `;
 
+const EmptyBox = styled.section`
+  padding: 1rem;
+  text-align: center;
+  color: ${({ theme }) => theme.colors.primary};
+  font-size: 1.2rem;
+`;
 const Heading = styled.h3`
   color: ${({ theme }) => theme.colors.primary};
   font-size: 1.5rem;
@@ -196,6 +273,10 @@ const AccordionCard = styled(Card)`
     justify-content: space-between;
     align-items: flex-start;
     gap: 0.5rem;
+
+    @media (max-width: ${(props) => props.theme.breakpoints.sm}) {
+      flex-direction: column;
+    }
   }
 
   .summary {
@@ -217,15 +298,12 @@ const AccordionCard = styled(Card)`
     font-weight: 400;
   }
 
-  .view-more {
-    outline: none;
-    border: none;
-    background-color: transparent;
-    padding: 0.25rem 0.75rem;
+  .direction {
     color: ${({ theme }) => theme.colors.primary};
     font-size: 0.8rem;
     font-weight: 500;
-    cursor: pointer;
+    text-align: left;
+    margin-top: 0.25rem;
   }
 `;
 
@@ -269,6 +347,10 @@ const InputBox = styled.input`
   &:focus {
     border-color: ${({ theme }) => theme.colors.primary};
   }
+
+  @media (max-width: ${(props) => props.theme.breakpoints.sm}) {
+    font-size: 0.6rem;
+  }
 `;
 
 const Button = styled.button`
@@ -281,6 +363,12 @@ const Button = styled.button`
   font-size: 0.9rem;
   width: 100%;
   cursor: pointer;
+
+  &:disabled {
+    background-color: ${({ theme }) => theme.colors.secondary};
+
+    cursor: not-allowed;
+  }
 `;
 
 export default Home;

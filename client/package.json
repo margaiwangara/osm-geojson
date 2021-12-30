@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/margaiwangara/osm-geojson#readme",
   "dependencies": {
+    "axios": "^0.24.0",
     "formik": "^2.2.9",
     "next": "^12.0.7",
     "polished": "^4.1.3",
