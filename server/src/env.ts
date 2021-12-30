@@ -5,7 +5,7 @@ dotenv.config();
 
 const env = cleanEnv(process.env, {
   PORT: num({ default: 5000 }),
-  NODE_ENV: str({ default: 'development', choices: ['development', 'production'] }),
+  NODE_ENV: str({ default: 'development', choices: ['development', 'production', 'testing'] }),
   CLIENT_URL: str({ default: 'http://localhost:3000' }),
 
   // Redis

@@ -19,9 +19,7 @@ class GeoJSONController {
       let error: string | null = null;
 
       if (!coords) {
-        // min_lon,min_lat,max_lon,max_lat
-        error = 'Coordinates for coords=minLon,minLat,maxLon,maxLat are required';
-        return next(new HttpException(error, 400));
+        return next(new HttpException('Coordinates for coords=minLon,minLat,maxLon,maxLat are required', 400));
       }
 
       // coords = '-122.5,37.5,-121.5,38.5'
@@ -31,15 +29,14 @@ class GeoJSONController {
       const maxLat = parseFloat(coords?.split(',')?.[3]);
 
       if (!minLon || !minLat || !maxLon || !maxLat) {
-        error = 'Coordinates for coords=minLon,minLat,maxLon,maxLat are required';
-        return next(new HttpException(error, 400));
+        return next(new HttpException('minLon,minLat,maxLon,maxLat coordinates are required', 400));
       }
 
       // The latitudes must be between -90 and 90, longitudes between -180 and 180 and the minima must be less than the maxima.
       if (minLat > 90 || minLat < -90 || maxLat > 90 || maxLat < -90) {
         error = 'minLat and maxLat must be between -90 and 90';
       } else if (minLon > 180 || minLon < -180 || maxLon > 180 || maxLon < -180) {
-        error = 'minLon and maxLon must be between -90 and 90';
+        error = 'minLon and maxLon must be between -180 and 180';
       }
 
       if (error) {
