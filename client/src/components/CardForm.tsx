@@ -6,6 +6,7 @@ import axios from 'axios';
 import { Card, InputBox, Button } from './StyledComponents';
 import { __BASE_URL__ } from '@src/constants';
 import { Notyf } from 'notyf';
+import { useState, useEffect } from 'react';
 
 const InputDataSchema = Yup.object().shape({
   min_lat: Yup.number()
@@ -37,9 +38,21 @@ type Props = {
   setGeoData: React.Dispatch<React.SetStateAction<GeoProps[]>>;
 };
 
-const notyf = new Notyf();
-
 function CardForm({ setGeoData }: Props) {
+  const [notyf, setNotyf] = useState<Notyf>();
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (isMounted) {
+      setNotyf(new Notyf());
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const getGeoJSON = async (values: InputDataProps) => {
     const { min_lat, min_lon, max_lat, max_lon } = values;
     try {
@@ -68,7 +81,7 @@ function CardForm({ setGeoData }: Props) {
 
       setGeoData(geoDataMap);
     } catch (error) {
-      notyf.error(error?.response?.data?.error || 'Something went wrong');
+      notyf?.error(error?.response?.data?.error || 'Something went wrong');
     }
   };
   return (
