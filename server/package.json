@@ -36,7 +36,7 @@
     "server": "node dist/index.js",
     "clean": "rimraf -rf dist/*",
     "watch": "tsc -w",
-    "build": "tsc .",
+    "build": "tsc --build",
     "test": "jest --watchAll --testTimeout=10000"
   },
   "repository": {
