@@ -1,3 +1,4 @@
+import 'notyf/notyf.min.css';
 import { createGlobalStyle, ThemeProvider } from 'styled-components';
 import { AppProps } from 'next/app';
 import theme from '@src/theme';

@@ -5,6 +5,7 @@ import { InputDataProps, GeoProps } from '../types';
 import axios from 'axios';
 import { Card, InputBox, Button } from './StyledComponents';
 import { __BASE_URL__ } from '@src/constants';
+import { Notyf } from 'notyf';
 
 const InputDataSchema = Yup.object().shape({
   min_lat: Yup.number()
@@ -36,6 +37,8 @@ type Props = {
   setGeoData: React.Dispatch<React.SetStateAction<GeoProps[]>>;
 };
 
+const notyf = new Notyf();
+
 function CardForm({ setGeoData }: Props) {
   const getGeoJSON = async (values: InputDataProps) => {
     const { min_lat, min_lon, max_lat, max_lon } = values;
@@ -65,7 +68,7 @@ function CardForm({ setGeoData }: Props) {
 
       setGeoData(geoDataMap);
     } catch (error) {
-      console.log('error', error);
+      notyf.error(error?.response?.data?.error || 'Something went wrong');
     }
   };
   return (
